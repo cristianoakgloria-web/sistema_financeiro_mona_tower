@@ -25,6 +25,7 @@
                     </a>
                     
                     <!-- Botão de Pagamento Rápido -->
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'financeiro')
                     <form action="{{ route('invoices.payments.full', $invoice) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center space-x-2" 
@@ -32,9 +33,10 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span class="bg-orange-100 rounded-lg">Pagar Tudo (Kz {{ number_format($invoice->balance, 2, ',', ' ') }})</span>
+                            <span class="rounded-lg">Pagar Tudo (Kz {{ number_format($invoice->balance, 2, ',', ' ') }})</span>
                         </button>
                     </form>
+                    @endif
                 </div>
                 @else
                 <span class="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center space-x-2">

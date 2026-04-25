@@ -20,35 +20,39 @@
             </svg>
             <span>Dashboard</span>
         </a>
-
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
         <a href="{{ route('students.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg {{ request()->routeIs('students.*') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
             </svg>
             <span>Estudantes</span>
         </a>
-
+        @endif
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
         <a href="{{ route('invoices.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg {{ request()->routeIs('invoices.*') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span>Faturas</span>
         </a>
-
+        @endif
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
         <a href="{{ route('payments.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg {{ request()->routeIs('payments.*') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
             </svg>
             <span>Pagamentos</span>
         </a>
-
+        @endif
+        @if(auth()->user()->role === 'admin')
         <a href="{{ route('users.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg {{ request()->routeIs('users.*') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
             </svg>
             <span>Utilizadores</span>
         </a>
-
+        @endif
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'financeiro')
         <!-- Item Principal de Relatórios -->
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open" class="flex items-center justify-between w-full px-4 py-3 rounded-lg {{ request()->routeIs('reports.*') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
@@ -76,6 +80,7 @@
                 </a>
             </div>
         </div>
+        @endif
     </nav>
 
     <!-- User Info -->

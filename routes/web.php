@@ -9,47 +9,31 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+
+// Web Routes
+
 
 Route::get('/', function () {
     return redirect('/dashboard');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Dashboard (todos autenticados com role válida)
-|--------------------------------------------------------------------------
-*/
+// Dashboard (todos autenticados com role válida)
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified', 'role:admin, secretaria, financeiro'])
+    ->middleware(['auth', 'verified', 'role:admin,secretaria,financeiro'])
     ->name('dashboard');
 
-/*
-|--------------------------------------------------------------------------
-| Rotas protegidas
-|--------------------------------------------------------------------------
-*/
+// Rotas protegidas
+
 Route::middleware(['auth'])->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Perfil do Utilizador (todos)
-    |--------------------------------------------------------------------------
-    */
+    //Perfil do Utilizador (todos)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 👑 UTILIZADORES (apenas ADMIN)
-    |--------------------------------------------------------------------------
-    */
+    //UTILIZADORES (apenas ADMIN)
     Route::prefix('users')->middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class);
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
@@ -57,38 +41,26 @@ Route::middleware(['auth'])->group(function () {
     });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 🧾 ESTUDANTES (admin + secretaria)
-    |--------------------------------------------------------------------------
-    */
+    //ESTUDANTES (admin + secretaria)
     Route::resource('students', StudentController::class)
         ->middleware('role:admin,secretaria');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 💰 FATURAS (admin + financeiro)
-    |--------------------------------------------------------------------------
-    */
+    //FATURAS (admin + financeiro)
     Route::resource('invoices', InvoiceController::class)
-        ->middleware('role:admin,financeiro');
+        ->middleware('role:admin,secretaria');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 💳 PAGAMENTOS (admin + financeiro)
-    |--------------------------------------------------------------------------
-    */
+    //PAGAMENTOS (admin + secretaria)
 
     // Rotas principais (sem create/store)
     Route::resource('payments', PaymentController::class)
-        ->middleware('role:admin,financeiro')
+        ->middleware('role:admin,secretaria')
         ->except(['create', 'store']);
 
     // Pagamentos vinculados à fatura
     Route::prefix('invoices/{invoice}')
-        ->middleware('role:admin,financeiro')
+        ->middleware('role:admin,secretaria')
         ->group(function () {
 
             Route::get('/payments/create', [PaymentController::class, 'create'])
@@ -102,11 +74,8 @@ Route::middleware(['auth'])->group(function () {
         });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 📊 RELATÓRIOS (admin + financeiro)
-    |--------------------------------------------------------------------------
-    */
+    //RELATÓRIOS (admin + financeiro)
+    
     Route::prefix('relatorios')
         ->middleware('role:admin,financeiro')
         ->group(function () {
@@ -123,9 +92,5 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-/*
-|--------------------------------------------------------------------------
-| Autenticação (Laravel Breeze)
-|--------------------------------------------------------------------------
-*/
+//Autenticação (Laravel Breeze)
 require __DIR__.'/auth.php';

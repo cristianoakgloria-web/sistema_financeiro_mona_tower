@@ -16,6 +16,21 @@ class AdminUserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'role' => 'admin',
             'phone' => '+244 927 476 913',
+        ]);/*
+        User::create([
+            'name' => 'Secretária',
+            'email' => 'secretaria@gmail.com',
+            'password' => Hash::make('12345678'),
+            'role' => 'secretaria',
+            'phone' => '+244 927 476 913',
         ]);
+        User::create([
+            'name' => 'Financeiro',
+            'email' => 'financeiro@gmail.com',
+            'password' => Hash::make('12345678'),
+            'role' => 'financeiro',
+            'phone' => '+244 927 476 913',
+        ]);*/
+
     }
 }

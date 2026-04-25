@@ -60,6 +60,7 @@
             </div>
 
             <!-- Utilizadores -->
+            @if(auth()->user()->role === 'admin')
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-orange-100 text-orange-600 mr-4">
@@ -73,6 +74,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
         <!-- Segunda Linha de Estatísticas -->
@@ -150,6 +152,7 @@
                     <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
                 </div>
                 <div class="p-6 space-y-4">
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
                     <a href="{{ route('invoices.create') }}" class="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div class="p-2 bg-blue-100 text-blue-600 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +161,8 @@
                         </div>
                         <span class="font-medium">Criar Nova Fatura</span>
                     </a>
-                    
+                    @endif
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
                     <a href="{{ route('students.create') }}" class="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div class="p-2 bg-green-100 text-green-600 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +171,8 @@
                         </div>
                         <span class="font-medium">Adicionar Estudante</span>
                     </a>
-                    
+                    @endif
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'secretaria')
                     <a href="{{ route('invoices.index') }}" class="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div class="p-2 bg-green-100 text-green-600 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +181,8 @@
                         </div>
                         <span class="font-medium">Registrar Pagamento</span>
                     </a>
-                    
+                    @endif
+                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'financeiro')
                     <a href="{{ route('reports.financial') }}" class="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div class="p-2 bg-purple-100 text-purple-600 rounded-lg">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,6 +191,7 @@
                         </div>
                         <span class="font-medium">Relatórios Financeiros</span>
                     </a>
+                    @endif
                 </div>
             </div>
         </div>
