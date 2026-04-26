@@ -5,6 +5,7 @@
                 <h1 class="text-2xl font-bold text-gray-900">{{ $student->name }}</h1>
                 <p class="text-gray-600">Detalhes do estudante</p>
             </div>
+            
             <div class="flex space-x-2">
                 <a href="{{ route('students.edit', $student) }}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">
                     Editar
@@ -110,5 +111,8 @@
                 </a>
             </div>
         </div>
+        <a href="{{ route('students.index') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                    ← Voltar à lista
+        </a>
     </div>
 </x-app-layout>

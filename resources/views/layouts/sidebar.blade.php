@@ -52,6 +52,14 @@
             <span>Utilizadores</span>
         </a>
         @endif
+        @if(auth()->user()->role === 'admin')
+        <a href="{{ route('audit-logs') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg {{ request()->routeIs('audit-logs') ? 'bg-school-secondary text-white' : 'text-school-light hover:bg-school-secondary' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Registos de Auditoria</span>
+        </a>
+        @endif
         @if(auth()->user()->role === 'admin' || auth()->user()->role === 'financeiro')
         <!-- Item Principal de Relatórios -->
         <div class="relative" x-data="{ open: false }">

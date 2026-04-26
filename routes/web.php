@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
@@ -36,8 +37,9 @@ Route::middleware(['auth'])->group(function () {
     //UTILIZADORES (apenas ADMIN)
     Route::prefix('users')->middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class);
-        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
-            ->name('users.toggle-status');
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 
 

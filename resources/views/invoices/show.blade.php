@@ -143,5 +143,8 @@
                 @endforelse
             </div>
         </div>
+        <a href="{{ route('invoices.index') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                    ← Voltar à lista
+        </a>
     </div>
 </x-app-layout>
