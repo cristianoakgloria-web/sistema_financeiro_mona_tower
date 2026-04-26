@@ -55,7 +55,7 @@ class InvoiceController extends Controller
             'issue_date' => now(),
             'total_amount' => $request->total_amount,
             'description' => $request->description,
-            'status' => 'pending',
+            'status' => 'pendente',
             'amount_paid' => 0,
         ]);
 

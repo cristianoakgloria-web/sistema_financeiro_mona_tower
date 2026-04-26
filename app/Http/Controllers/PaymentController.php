@@ -5,9 +5,31 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
+use App\Traits\HasAuditLog;
 
 class PaymentController extends Controller
 {
+    use HasAuditLog;
+    public function confirm($id)
+    {
+        $payment = Payment::findOrFail($id);
+
+        $old = $payment->getOriginal();
+
+        $payment->update([
+            'status' => 'confirmed'
+        ]);
+
+        $this->logActivity(
+            $payment,
+            'payment_confirmed',
+            $old,
+            $payment->getChanges()
+        );
+
+        return back();
+    }
+
     public function index()
     {
         $payments = Payment::with(['invoice.student'])
