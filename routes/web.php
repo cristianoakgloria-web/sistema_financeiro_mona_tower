@@ -53,16 +53,24 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:admin,secretaria');
 
 
-    //PAGAMENTOS (admin + secretaria)
+    //PAGAMENTOS (admin + financeiro)
 
     // Rotas principais (sem create/store)
     Route::resource('payments', PaymentController::class)
-        ->middleware('role:admin,secretaria')
+        ->middleware('role:admin,financeiro')
         ->except(['create', 'store']);
+
+    // Rotas de Confirmação e Rejeição
+    Route::patch('/payments/{id}/confirm', [PaymentController::class, 'confirm'])
+        ->middleware('role:admin,financeiro')
+        ->name('payments.confirm');
+    Route::patch('/payments/{id}/reject', [PaymentController::class, 'reject'])
+        ->middleware('role:admin,financeiro')
+        ->name('payments.reject');
 
     // Pagamentos vinculados à fatura
     Route::prefix('invoices/{invoice}')
-        ->middleware('role:admin,secretaria')
+        ->middleware('role:admin,financeiro')
         ->group(function () {
 
             Route::get('/payments/create', [PaymentController::class, 'create'])

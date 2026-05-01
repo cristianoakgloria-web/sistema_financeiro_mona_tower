@@ -10,6 +10,7 @@ use App\Traits\HasAuditLog;
 class PaymentController extends Controller
 {
     use HasAuditLog;
+
     public function confirm($id)
     {
         $payment = Payment::findOrFail($id);
@@ -20,14 +21,33 @@ class PaymentController extends Controller
             'status' => 'confirmed'
         ]);
 
+       // $this->logActivity($payment, 'payment_confirmed', $old, $payment->getChanges());
+
+        $this->updateInvoiceStatus($payment->invoice);
+
+        return back()->with('success', 'Pagamento confirmado com sucesso.');
+    }
+
+    public function reject($id)
+    {
+        $payment = Payment::findOrFail($id);
+
+        $old = $payment->getOriginal();
+
+        $payment->update([
+            'status' => 'rejected'
+        ]);
+
         $this->logActivity(
             $payment,
-            'payment_confirmed',
+            'payment_rejected',
             $old,
             $payment->getChanges()
         );
 
-        return back();
+        $this->updateInvoiceStatus($payment->invoice);
+
+        return back()->with('success', 'Pagamento rejeitado com sucesso.');
     }
 
     public function index()
@@ -73,12 +93,13 @@ class PaymentController extends Controller
             'payment_method' => $request->payment_method,
             'reference' => $request->reference,
             'notes' => $request->notes,
+            'status' => 'pending', // Garante que nasce pendente
         ]);
 
         $this->updateInvoiceStatus($invoice);
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Pagamento registado com sucesso.');
+            ->with('success', 'Pagamento registado. Aguarda confirmação.');
     }
 
     public function show(Payment $payment)
@@ -96,7 +117,8 @@ class PaymentController extends Controller
     public function update(Request $request, Payment $payment)
     {
         $invoice = $payment->invoice;
-        $maxAmount = $invoice->total_amount - ($invoice->payments()->sum('amount') - $payment->amount);
+        // Permite editar considerando o saldo corretamente sem contar os rejeitados
+        $maxAmount = $invoice->total_amount - ($invoice->payments()->where('status', '!=', 'rejected')->sum('amount') - $payment->amount);
 
         $request->validate([
             'amount' => 'required|numeric|min:0.01|max:' . $maxAmount,
@@ -144,22 +166,29 @@ class PaymentController extends Controller
             'payment_method' => 'cash',
             'reference' => 'Pagamento total automático',
             'notes' => 'Pagamento realizado automaticamente através do sistema.',
+            'status' => 'pending', // Garante que nasce pendente
         ]);
 
         $this->updateInvoiceStatus($invoice);
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Pagamento total registrado com sucesso!');
+            ->with('success', 'Pagamento total registrado. Aguarda confirmação.');
     }
 
     private function updateInvoiceStatus(Invoice $invoice)
     {
-        $totalPaid = $invoice->payments()->sum('amount');
-        $invoice->amount_paid = $totalPaid;
+        // Apenas pagamentos confirmados abatem o saldo real
+        $totalConfirmed = $invoice->payments()->where('status', 'confirmed')->sum('amount');
+        $invoice->amount_paid = $totalConfirmed;
 
-        if ($totalPaid >= $invoice->total_amount) {
+        // Verifica se há pagamentos a aguardar decisão
+        $hasPending = $invoice->payments()->where('status', 'pending')->exists();
+
+        if ($totalConfirmed >= $invoice->total_amount) {
             $invoice->status = 'paid';
-        } elseif ($totalPaid > 0) {
+        } elseif ($hasPending) {
+            $invoice->status = 'em_validacao';
+        } elseif ($totalConfirmed > 0) {
             $invoice->status = 'partial';
         } elseif ($invoice->due_date < now()) {
             $invoice->status = 'overdue';
