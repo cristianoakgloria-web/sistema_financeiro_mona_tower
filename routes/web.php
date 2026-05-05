@@ -10,9 +10,14 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
+// Rota para marcar notificações como lidas
+
+Route::post('/notifications/read', function () {
+    auth()->user()->unreadNotifications->markAsRead();
+    return back();
+});
 
 // Web Routes
-
 
 Route::get('/', function () {
     return redirect('/dashboard');

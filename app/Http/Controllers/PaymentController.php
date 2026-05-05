@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Payment;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 use App\Traits\HasAuditLog;
+use App\Notifications\PaymentConfirmed;
+use App\Notifications\PaymentReceived;
+use App\Notifications\PaymentRejected;
+use Illuminate\Support\Facades\Notification;
 
 class PaymentController extends Controller
 {
@@ -25,27 +30,42 @@ class PaymentController extends Controller
 
         $this->updateInvoiceStatus($payment->invoice);
 
+        // Notifica os administradores e equipe financeira sobre a confirmação do pagamento
+        $users = User::whereIn('role', ['admin', 'financeiro'])->get();
+        Notification::send($users, new PaymentConfirmed($payment));
+        // Notifica o estudante e o responsável sobre a confirmação do pagamento
+
         return back()->with('success', 'Pagamento confirmado com sucesso.');
     }
 
     public function reject($id)
     {
+        // 1. Removemos a injeção do Invoice da assinatura
         $payment = Payment::findOrFail($id);
 
+        // 2. Captura o estado ANTES da alteração
         $old = $payment->getOriginal();
 
         $payment->update([
             'status' => 'rejected'
         ]);
 
+        // 3. Regista a auditoria de forma limpa e dinâmica
         $this->logActivity(
+            'pagamento_rejeitado',
             $payment,
-            'payment_rejected',
             $old,
-            $payment->getChanges()
+            $payment->getChanges() // Captura apenas o que foi alterado (o status)
         );
 
+        // 4. Atualiza o estado da fatura (ex: volta a ficar 'pendente' ou 'parcial')
         $this->updateInvoiceStatus($payment->invoice);
+
+        // 5. Notifica os utilizadores com perfil de gestão
+        $users = User::whereIn('role', ['admin', 'secretaria'])->get();
+        
+        // Passamos $payment->invoice diretamente para a notificação
+        Notification::send($users, new PaymentRejected($payment, $payment->invoice));
 
         return back()->with('success', 'Pagamento rejeitado com sucesso.');
     }
@@ -71,7 +91,7 @@ class PaymentController extends Controller
         return view('payments.create', compact('invoice'));
     }
 
-    public function store(Request $request, Invoice $invoice)
+    public function store(Request $request, Invoice $invoice, Payment $payment)
     {
         if (!$invoice->student) {
             return redirect()->route('invoices.edit', ['invoice' => $invoice->id])
@@ -97,6 +117,11 @@ class PaymentController extends Controller
         ]);
 
         $this->updateInvoiceStatus($invoice);
+
+        // Notificar todos os Administradores e equipe financeira sobre o novo pagamento
+        //$payment = Payment::findOrFail($id);
+        $users = User::whereIn('role', ['admin', 'financeiro'])->get();
+        Notification::send($users, new PaymentReceived($payment, $invoice));
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Pagamento registado. Aguarda confirmação.');
@@ -197,5 +222,19 @@ class PaymentController extends Controller
         }
         
         $invoice->save();
+    }
+
+    protected function logActivity($action, $model, $oldValues = null, $newValues = null)
+    {
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'auditable_type' => get_class($model),
+            'auditable_id' => $model->id,
+            'old_values' => $oldValues,
+            'new_values' => $newValues,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
     }
 }

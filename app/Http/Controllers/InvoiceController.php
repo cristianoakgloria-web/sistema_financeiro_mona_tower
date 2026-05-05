@@ -6,6 +6,10 @@ use App\Models\Invoice;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\User;
+use App\Notifications\InvoiceCreate;
+use App\Notifications\InvoiceReminder; 
+use Illuminate\Support\Facades\Notification;
 
 class InvoiceController extends Controller
 {
@@ -58,6 +62,10 @@ class InvoiceController extends Controller
             'status' => 'pendente',
             'amount_paid' => 0,
         ]);
+
+        // Notificar todos os Administradores e equipe financeira sobre a nova fatura criada
+        $users = User::whereIn('role', ['admin', 'financeiro'])->get();
+        Notification::send($users, new InvoiceCreate($invoice));
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Fatura criada com sucesso.');
