@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\HasAuditLog;
+use Illuminate\Notifications\Notifiable;
 
 class Guardian extends Model
 {
-    use HasFactory, HasAuditLog; // 2. Ativar o Trait dentro da classe
+    use HasFactory, HasAuditLog, Notifiable; // 2. Ativar o Trait dentro da classe
 
     protected $fillable = [
         'name',

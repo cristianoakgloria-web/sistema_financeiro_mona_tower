@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\HasAuditLog;
+use Illuminate\Notifications\Notifiable;
 
 class Student extends Model
 {
-    use HasFactory, HasAuditLog; // 2. Ativar o Trait dentro da classe dentro da classe
+    use HasFactory, HasAuditLog, Notifiable; // 2. Ativar o Trait dentro da classe dentro da classe
 
     protected $fillable = [
         'student_code',

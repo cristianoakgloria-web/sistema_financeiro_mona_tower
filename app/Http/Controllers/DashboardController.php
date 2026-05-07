@@ -17,7 +17,7 @@ class DashboardController extends Controller
         try {
             $totalStudents = Student::count();
             $paidInvoices = Invoice::where('status', 'paid')->count();
-            $pendingInvoices = Invoice::where('status', 'pending')->count();
+            $pendingInvoices = Invoice::where('status', 'pendente')->count();
             $overdueInvoices = Invoice::where('status', 'overdue')->count();
             $totalUsers = User::count();
             $totalRevenue = Payment::sum('amount');
