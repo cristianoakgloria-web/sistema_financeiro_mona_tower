@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\GuardianController;
 use Illuminate\Support\Facades\Route;
 
 // Rota para marcar notificações como lidas
@@ -52,6 +53,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('students', StudentController::class)
         ->middleware('role:admin,secretaria');
 
+    //ENCARREGADOS DE EDUCAÇÃO (admin + secretaria)
+    Route::resource('guardians', GuardianController::class)
+        ->middleware('role:admin,secretaria');
 
     //FATURAS (admin + financeiro)
     Route::resource('invoices', InvoiceController::class)
