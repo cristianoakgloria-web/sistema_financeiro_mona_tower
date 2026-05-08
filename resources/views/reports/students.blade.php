@@ -115,7 +115,7 @@
                                 Kz {{ number_format($student->invoices->sum('amount_paid'), 2, ',', ' ') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                                Kz {{ number_format($student->invoices->whereIn('status', ['pending', 'overdue'])->sum('balance'), 2, ',', ' ') }}
+                                Kz {{ number_format($student->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance'), 2, ',', ' ') }}
                             </td>
                         </tr>
                         @endforeach
