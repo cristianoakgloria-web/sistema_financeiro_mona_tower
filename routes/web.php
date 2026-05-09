@@ -112,6 +112,15 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/faturas', [ReportController::class, 'invoices'])
                 ->name('reports.invoices');
+
+            Route::get('/reports/students/export', [ReportController::class, 'exportStudents'])
+                ->name('reports.students.export');
+
+            Route::get('/reports/invoices/export', [ReportController::class, 'exportInvoices'])
+                ->name('reports.invoices.export');
+
+            Route::get('/reports/financial/export', [ReportController::class, 'exportFinancial'])
+                ->name('reports.financial.export');
         });
 
 });

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
-{
+{//totalRevenue
     public function index()
     {
         try {
