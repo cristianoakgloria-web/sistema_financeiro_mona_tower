@@ -11,7 +11,12 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\GuardianController;
 use Illuminate\Support\Facades\Route;
 
-// Rota para marcar notificações como lidas
+// Rota para notificações
+
+Route::get('/notifications', function () {
+    $notifications = auth()->user()->unreadNotifications;
+    return view('notifications.index', compact('notifications'));
+})->name('notifications.index');
 
 Route::post('/notifications/read', function () {
     auth()->user()->unreadNotifications->markAsRead();

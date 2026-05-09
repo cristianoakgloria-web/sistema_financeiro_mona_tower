@@ -14,6 +14,13 @@ class Kernel extends ConsoleKernel
         
         // Executar às 15h da tarde
         $schedule->command('invoices:check-overdue')->dailyAt('15:00');
+
+        // Limpar notificações lidas há mais de 15 dias, executando diariamente
+        $schedule->call(function () {
+            \Illuminate\Notifications\DatabaseNotification::whereNotNull('read_at')
+                ->where('read_at', '<', now()->subDays(15))
+                ->delete();
+        })->daily();
     }
 
     protected function commands()

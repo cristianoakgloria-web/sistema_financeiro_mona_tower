@@ -129,8 +129,8 @@
                     <!-- FOOTER OPCIONAL -->
                     @if(auth()->user()->notifications->count() > 5)
                         <div class="p-2 border-t border-gray-100 text-center bg-gray-50 rounded-b-lg">
-                            <a href="#" class="text-[10px] text-blue-600 hover:text-blue-700">
-                                Ver mais {{ auth()->user()->notifications->count() - 5 }} →
+                            <a href="{{ route('notifications.index') }}" class="text-[10px] text-blue-600 hover:text-blue-700 font-medium">
+                                Ver todas ({{ auth()->user()->notifications->count() }}) →
                             </a>
                         </div>
                     @endif
