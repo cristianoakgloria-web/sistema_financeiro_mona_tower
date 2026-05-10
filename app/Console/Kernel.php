@@ -9,6 +9,9 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
+        // Aplicar juros de mora - uma vez por dia às 00:01
+        $schedule->command('invoices:apply-late-fees')->dailyAt('00:01');
+
         // Enviar lembretes de faturas - uma vez por dia às 08:00
         $schedule->command('invoices:send-reminders')
             ->dailyAt('08:00')
