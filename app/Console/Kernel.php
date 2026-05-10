@@ -2,6 +2,10 @@
 
 namespace App\Console;
 
+use App\Services\BillingService;
+use App\Models\Invoice;
+use App\Models\Student;
+use Illuminate\Console\Command;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -9,6 +13,13 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
+        Schedule::call(function () {
+            $service = new BillingService();
+            if ($service->isCobrancaAtiva()) {
+                $service->processarCobrancaEmMassa();
+            }
+        })->monthlyOn(1, '00:01');
+
         // Aplicar juros de mora - uma vez por dia às 00:01
         $schedule->command('invoices:apply-late-fees')->dailyAt('00:01');
 

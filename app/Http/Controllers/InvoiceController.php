@@ -7,19 +7,41 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Services\BillingService;
 use App\Notifications\InvoiceCreate;
 use App\Notifications\InvoiceReminder; 
 use Illuminate\Support\Facades\Notification;
 
 class InvoiceController extends Controller
 {
-    public function index()
+    public function handleMassAction(Request $request, BillingService $billingService)
     {
+        // Se clicou no botão de processar faturas agora
+        if ($request->has('processar_agora')) {
+            $total = $billingService->processarCobrancaEmMassa();
+            return back()->with('success', "Sucesso! $total novas faturas foram geradas.");
+        }
+
+        // Se clicou no toggle de ativar/desativar
+        $novoStatus = $request->has('status_toggle'); 
+        $billingService->alternarStatusCobranca($novoStatus);
+
+        return back()->with('success', 'Configuração de faturamento atualizada.');
+    }
+
+    public function index(BillingService $billingService)
+    {
+        // Busca as faturas (ajuste conforme sua lógica de paginação)
+        $invoices = Invoice::with('student')->latest()->paginate(10);
+
+        // BUSCA O STATUS DO BOTÃO NO SERVICE
+        $statusAtivo = $billingService->isCobrancaAtiva();
+
         $invoices = Invoice::with(['student'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('invoices.index', compact('invoices'));
+        return view('invoices.index', compact('invoices', 'statusAtivo'));
     }
 
     public function create()

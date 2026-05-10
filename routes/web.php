@@ -66,6 +66,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('invoices', InvoiceController::class)
         ->middleware('role:admin,secretaria');
 
+    Route::post('/invoices/mass-action', [InvoiceController::class, 'handleMassAction'])
+        ->name('invoices.mass-action')
+        ->middleware('role:admin,financeiro');
+
 
     //PAGAMENTOS (admin + financeiro)
 

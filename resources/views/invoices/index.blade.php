@@ -14,6 +14,36 @@
         </div>
     </x-slot>
 
+    <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+        <form action="{{ route('invoices.mass-action') }}" method="POST">
+            @csrf
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                <!-- Esquerda: Toggle de Ativação -->
+                <div class="flex items-center space-x-3">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="status_toggle" value="1" 
+                            {{ $statusAtivo ? 'checked' : '' }} 
+                            onchange="this.form.submit()"
+                            class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                    <span class="text-sm font-medium text-gray-700">
+                        Faturamento Automático: <span class="{{ $statusAtivo ? 'text-green-600' : 'text-red-500' }}">
+                            {{ $statusAtivo ? 'ATIVADO' : 'DESATIVADO' }}
+                        </span>
+                    </span>
+                </div>
+
+                <!-- Direita: Botão de Disparo Manual -->
+                <button type="submit" name="processar_agora" value="1"
+                        class="inline-flex items-center px-4 py-2 bg-school-primary text-white text-sm font-bold rounded-lg hover:bg-school-dark transition shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    GERAR MENSALIDADES DE {{ now()->translatedFormat('F') }}
+                </button>
+            </div>
+        </form>
+    </div>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-6">
             <!-- Filtros -->
