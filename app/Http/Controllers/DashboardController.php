@@ -20,7 +20,7 @@ class DashboardController extends Controller
             $pendingInvoices = Invoice::where('status', 'pendente')->count();
             $overdueInvoices = Invoice::where('status', 'overdue')->count();
             $totalUsers = User::count();
-            $totalRevenue = Payment::sum('amount');
+            $totalRevenue = Payment::where('status', 'confirmed')->sum('amount');
 
             // Revenue data for the last 6 months
             $revenueData = Payment::select(
@@ -28,6 +28,7 @@ class DashboardController extends Controller
                 DB::raw('MONTH(payment_date) as month'),
                 DB::raw('SUM(amount) as total')
             )
+            ->where('status', 'confirmed')
             ->where('payment_date', '>=', Carbon::now()->subMonths(6))
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
@@ -60,6 +61,7 @@ class DashboardController extends Controller
             ];
 
             $recentPayments = Payment::with(['invoice.student'])
+                ->where('status', 'confirmed')
                 ->orderBy('payment_date', 'desc')
                 ->limit(5)
                 ->get();

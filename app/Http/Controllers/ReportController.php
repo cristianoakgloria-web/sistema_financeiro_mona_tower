@@ -20,8 +20,8 @@ class ReportController extends Controller
         $startDate = $request->start_date ? Carbon::parse($request->start_date) : Carbon::now()->startOfMonth();
         $endDate   = $request->end_date   ? Carbon::parse($request->end_date)   : Carbon::now()->endOfMonth();
 
-        $totalRevenue  = Payment::whereBetween('payment_date', [$startDate, $endDate])->sum('amount');
-        $totalPayments = Payment::whereBetween('payment_date', [$startDate, $endDate])->count();
+        $totalRevenue  = Payment::where('status', 'confirmed')->whereBetween('payment_date', [$startDate, $endDate])->sum('amount');
+        $totalPayments = Payment::where('status', 'confirmed')->whereBetween('payment_date', [$startDate, $endDate])->count();
         $totalInvoices = Invoice::whereBetween('issue_date',   [$startDate, $endDate])->count();
 
         $paidInvoices = Invoice::whereBetween('issue_date', [$startDate, $endDate])
@@ -33,6 +33,7 @@ class ReportController extends Controller
             DB::raw('MONTH(payment_date) as month'),
             DB::raw('SUM(amount) as total')
         )
+        ->where('status', 'confirmed')
         ->whereBetween('payment_date', [$startDate, $endDate])
         ->groupBy('year', 'month')
         ->orderBy('year')->orderBy('month')
@@ -45,6 +46,7 @@ class ReportController extends Controller
         }
 
         $paymentMethodData = Payment::select('payment_method', DB::raw('COUNT(*) as count'))
+            ->where('status', 'confirmed')
             ->whereBetween('payment_date', [$startDate, $endDate])
             ->groupBy('payment_method')->get();
 
@@ -55,6 +57,7 @@ class ReportController extends Controller
         }
 
         $recentPayments = Payment::with(['invoice.student'])
+            ->where('status', 'confirmed')
             ->whereBetween('payment_date', [$startDate, $endDate])
             ->orderBy('payment_date', 'desc')->limit(10)->get();
 
@@ -237,6 +240,7 @@ class ReportController extends Controller
         $endDate   = $request->end_date   ? Carbon::parse($request->end_date)   : Carbon::now()->endOfMonth();
 
         $paymentsQuery = Payment::with(['invoice.student'])
+            ->where('status', 'confirmed')
             ->whereBetween('payment_date', [$startDate, $endDate]);
 
         if ($request->filled('student_id')) {
@@ -262,6 +266,7 @@ class ReportController extends Controller
             DB::raw('MONTH(payment_date) as month'),
             DB::raw('SUM(amount) as total')
         )
+        ->where('status', 'confirmed')
         ->whereBetween('payment_date', [$startDate, $endDate])
         ->when($request->filled('student_id'), fn($q) =>
             $q->whereHas('invoice', fn($q2) => $q2->where('student_id', $request->student_id))
@@ -602,9 +607,10 @@ class ReportController extends Controller
                 <div class='kpi-card kpi-highlight'>
                     <p class='kpi-label'>Receita Total</p>
                     <p class='kpi-value' style='color:#f97316'>Kz {$this->fmt($totalRevenue)}</p>
+                    <p class='kpi-sub'>Pagamentos confirmados</p>
                 </div>
                 <div class='kpi-card'>
-                    <p class='kpi-label'>Pagamentos Recebidos</p>
+                    <p class='kpi-label'>Pagamentos Confirmados</p>
                     <p class='kpi-value' style='color:#1a3a6b'>{$totalPayments}</p>
                 </div>
                 <div class='kpi-card'>
@@ -620,7 +626,7 @@ class ReportController extends Controller
 
             <div class='charts-row'>
                 <div class='chart-box chart-wide'>
-                    <p class='chart-title'>Receita por Período</p>
+                    <p class='chart-title'>Receita Confirmada por Período</p>
                     <canvas id='revenueChart' height='160'></canvas>
                 </div>
                 <div class='chart-box'>
@@ -630,7 +636,7 @@ class ReportController extends Controller
             </div>
 
             <div class='table-box'>
-                <p class='section-title'>Últimos Pagamentos Registados</p>
+                <p class='section-title'>Últimos Pagamentos Confirmados</p>
                 <table>
                     <thead>
                         <tr>
@@ -651,7 +657,7 @@ class ReportController extends Controller
                 data: {
                     labels: {$jsRevenueLabels},
                     datasets: [{
-                        label: 'Receita (Kz)',
+                        label: 'Receita confirmada (Kz)',
                         data: {$jsRevenueData},
                         backgroundColor: 'rgba(26,58,107,0.7)',
                         borderColor: 'rgba(26,58,107,1)',
