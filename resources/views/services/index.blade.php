@@ -16,12 +16,6 @@
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-6">
-            @if(session('success'))
-                <div class="p-4 bg-green-50 text-green-700 border-b border-green-200">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <table class="w-full">
                 <thead class="bg-gray-50 border-b">
                     <tr>

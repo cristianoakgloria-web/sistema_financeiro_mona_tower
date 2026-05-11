@@ -2,97 +2,146 @@
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Gestão de Estudantes</h1>
-                <p class="text-gray-600">Lista de todos os estudantes</p>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    Estudantes
+                </h1>
+                <p class="text-gray-600">
+                    Gestão de estudantes do sistema
+                </p>
             </div>
-            <div class="flex space-x-2">
-                <a href="{{ route('students.create') }}" class="bg-school-primary text-white px-4 py-2 rounded-lg hover:bg-school-dark flex items-center space-x-2">
+           <a href="{{ route('students.create') }}" class="bg-school-primary text-white px-4 py-2 rounded-lg hover:bg-school-dark flex items-center space-x-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     <span>Novo Estudante</span>
                 </a>
-                <!-- Botão para criar fatura rapidamente -->
-                <a href="{{ route('invoices.create') }}" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span>Nova Fatura</span>
-                </a>
-            </div>
         </div>
     </x-slot>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Código
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Nome
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Turma
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ano Lectivo
-                            </th>
-                            <!--<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Transporte
-                            </th> -->
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ações
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($students as $student)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {{ $student->student_code }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $student->name }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $student->class }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $student->academic_year }}
-                            </td>
-                            <!-- <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                    { $servives ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    { $servives ? 'Sim' : 'Não' }}
-                                </span>
-                            </td> -->
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex items-center space-x-2">
-                                    <a href="{{ route('students.show', $student) }}" class="text-school-primary hover:text-school-dark">Ver</a>
-                                    <a href="{{ route('students.edit', $student) }}" class="text-yellow-600 hover:text-yellow-900">Editar</a>
-                                    <form action="{{ route('students.destroy', $student) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900" 
-                                                onclick="return confirm('Tem certeza que deseja eliminar este estudante?')">
-                                            Eliminar
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                        Código
+                    </th>
 
-            <div class="mt-6">
-                {{ $students->links() }}
-            </div>
-        </div>
+                    <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                        Estudante
+                    </th>
+
+                    <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                        Turma
+                    </th>
+
+                    <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                        Encarregado
+                    </th>
+
+                    <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                        Serviços
+                    </th>
+
+                    <th class="text-right px-6 py-4 text-sm font-semibold text-gray-600">
+                        Ações
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-gray-100">
+                @forelse($students as $student)
+                    <tr class="hover:bg-gray-50 transition">
+                        {{-- Código --}}
+                        <td class="px-6 py-5">
+                            <div class="font-medium text-gray-900">
+                                {{ $student->student_code }}
+                            </div>
+                        </td>
+
+                        {{-- Estudante --}}
+                        <td class="px-6 py-5">
+                            <div class="font-semibold text-gray-900">
+                                {{ $student->name }}
+                            </div>
+
+                            <div class="text-sm text-gray-500">
+                                {{ $student->email }}
+                            </div>
+                        </td>
+
+                        {{-- Turma --}}
+                        <td class="px-6 py-5 text-gray-700">
+                            {{ $student->class }}
+                        </td>
+                        {{-- Encarregado --}}
+                        <td class="px-6 py-5">
+                            <div class="font-medium text-gray-800">
+                                {{ $student->guardian->name ?? '---' }}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                {{ $student->guardian->email ?? '' }}
+                            </div>
+                        </td>
+
+                        {{-- Serviços --}}
+                        <td class="px-6 py-5">
+                            <div class="flex flex-wrap gap-2">
+                                @forelse($student->services->take(2) as $service)
+                                    <span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
+                                        {{ $service->name }}
+                                    </span>
+                                @empty
+                                    <span class="text-gray-400 text-sm">
+                                        Nenhum
+                                    </span>
+                                @endforelse
+                                @if($student->services->count() > 2)
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                                        +{{ $student->services->count() - 2 }}
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
+
+                        {{-- Ações --}}
+                        <td class="px-6 py-5">
+                            <div class="flex justify-end items-center gap-4">
+                                <a href="{{ route('students.show', $student) }}"
+                                   class="text-school-primary hover:underline text-sm font-medium">
+                                    Ver
+                                </a>
+
+                                <a href="{{ route('students.edit', $student) }}"
+                                   class="text-blue-600 hover:underline text-sm font-medium">
+                                    Editar
+                                </a>
+
+                                <form action="{{ route('students.destroy', $student) }}"
+                                      method="POST"
+                                      onsubmit="return confirm('Deseja remover este estudante?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            class="text-red-600 hover:underline text-sm font-medium">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6"
+                            class="px-6 py-10 text-center text-gray-500">
+                            Nenhum estudante encontrado.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    {{-- Paginação --}}
+    <div class="mt-6">
+        {{ $students->links() }}
     </div>
 </x-app-layout>

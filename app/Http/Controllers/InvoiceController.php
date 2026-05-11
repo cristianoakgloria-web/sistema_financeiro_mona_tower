@@ -96,7 +96,11 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         // Carregar as relações necessárias
-        $invoice->load(['student.guardian', 'payments']);
+        $invoice->load([
+            'student.guardian',
+            'payments',
+            'items'
+        ]);
         
         // Verificar se o estudante existe
         if (!$invoice->student) {

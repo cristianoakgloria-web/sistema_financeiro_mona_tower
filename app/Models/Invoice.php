@@ -32,6 +32,10 @@ class Invoice extends Model
     ];
 
     // --- Relacionamentos ---
+    public function items(): HasMany
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
 
     public function student(): BelongsTo
     {
