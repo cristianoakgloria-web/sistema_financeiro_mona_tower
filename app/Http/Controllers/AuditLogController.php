@@ -10,7 +10,7 @@ class AuditLogController extends Controller
     public function index()
     {
         // Recupera os logs com os dados do utilizador associado, ordenados pelo mais recente
-        $logs = AuditLog::with('user')->latest()->paginate(15);
+        $logs = AuditLog::with('user')->latest()->paginate(6);
 
         return view('admin.audit_logs.index', compact('logs'));
     }

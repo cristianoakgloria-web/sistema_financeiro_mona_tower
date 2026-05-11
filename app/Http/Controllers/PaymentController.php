@@ -72,9 +72,7 @@ class PaymentController extends Controller
 
     public function index()
     {
-        $payments = Payment::with(['invoice.student'])
-            ->orderBy('payment_date', 'desc')
-            ->paginate(10);
+        $payments = Payment::with(['invoice.student'])->latest()->paginate(6);
 
         return view('payments.index', compact('payments'));
     }

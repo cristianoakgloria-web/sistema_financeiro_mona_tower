@@ -63,7 +63,7 @@ class DashboardController extends Controller
             $recentPayments = Payment::with(['invoice.student'])
                 ->where('status', 'confirmed')
                 ->orderBy('payment_date', 'desc')
-                ->limit(5)
+                ->limit(4)
                 ->get();
 
             return view('dashboard', compact(

@@ -41,9 +41,9 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Ano Lectivo
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <!--<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Transporte
-                            </th>
+                            </th> -->
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Ações
                             </th>
@@ -64,12 +64,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $student->academic_year }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <!-- <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                    {{ $student->transport_required ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    {{ $student->transport_required ? 'Sim' : 'Não' }}
+                                    { $servives ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    { $servives ? 'Sim' : 'Não' }}
                                 </span>
-                            </td>
+                            </td> -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex items-center space-x-2">
                                     <a href="{{ route('students.show', $student) }}" class="text-school-primary hover:text-school-dark">Ver</a>

@@ -32,14 +32,14 @@ class InvoiceController extends Controller
     public function index(BillingService $billingService)
     {
         // Busca as faturas (ajuste conforme sua lógica de paginação)
-        $invoices = Invoice::with('student')->latest()->paginate(10);
+        $invoices = Invoice::with('student')->latest();
 
         // BUSCA O STATUS DO BOTÃO NO SERVICE
         $statusAtivo = $billingService->isCobrancaAtiva();
 
         $invoices = Invoice::with(['student'])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(6);
 
         return view('invoices.index', compact('invoices', 'statusAtivo'));
     }

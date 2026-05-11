@@ -10,7 +10,7 @@ class GuardianController extends Controller
 {
     public function index()
     {
-        $guardians = Guardian::latest()->paginate(10);
+        $guardians = Guardian::latest()->paginate(6);
         return view('guardians.index', compact('guardians'));
     }
 

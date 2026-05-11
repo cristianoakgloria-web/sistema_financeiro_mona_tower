@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\GuardianController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\GuardianController;
 use Illuminate\Support\Facades\Route;
 
 // Rota para notificações
@@ -53,6 +54,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 
+    //SERVIÇOS (admin + secretaria)
+    Route::resource('services', ServiceController::class)
+        ->middleware('role:admin,secretaria');
+
+    Route::patch('services/{service}/toggle-status', [ServiceController::class, 'toggleStatus'])
+        ->middleware('role:admin,secretaria')
+        ->name('services.toggle-status');
 
     //ESTUDANTES (admin + secretaria)
     Route::resource('students', StudentController::class)

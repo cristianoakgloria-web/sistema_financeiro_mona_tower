@@ -67,5 +67,8 @@
                 </table>
             </div>
         </div>
+        <div class="mt-6">
+            {{ $guardians->links() }}
+        </div>
     </div>
 </x-app-layout>

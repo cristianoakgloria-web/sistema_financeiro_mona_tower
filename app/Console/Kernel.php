@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-        Schedule::call(function () {
+        $schedule->call(function () {
             $service = new BillingService();
             if ($service->isCobrancaAtiva()) {
                 $service->processarCobrancaEmMassa();

@@ -14,7 +14,7 @@
         </div>
     </x-slot>
 
-    <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+    <div class="mb-6 p-4 bg-white border border-gray-200 rounded-xl">
         <form action="{{ route('invoices.mass-action') }}" method="POST">
             @csrf
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
