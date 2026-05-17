@@ -16,11 +16,15 @@ class DashboardController extends Controller
     {
         try {
             $totalStudents = Student::count();
-            $paidInvoices = Invoice::where('status', 'paid')->count();
+            $paidInvoices = Invoice::where('status', 'pago')->count();
+            $partiallyPaidInvoices = Invoice::where('status', 'parcial')->count();
             $pendingInvoices = Invoice::where('status', 'pendente')->count();
-            $overdueInvoices = Invoice::where('status', 'overdue')->count();
+            $overdueInvoices = Invoice::where('status', 'vencido')->count();
             $totalUsers = User::count();
             $totalRevenue = Payment::where('status', 'confirmed')->sum('amount');
+            $totalBilled = Invoice::sum('total_amount');
+            $totalPaid   = Invoice::sum('amount_paid');
+            $paymentRate = $totalBilled > 0 ? ($totalPaid / $totalBilled) * 100 : 0;
 
             // Revenue data for the last 6 months
             $revenueData = Payment::select(
@@ -56,6 +60,7 @@ class DashboardController extends Controller
 
             $paymentChartData = [
                 (int) $paidInvoices,
+                (int) $partiallyPaidInvoices,
                 (int) $pendingInvoices,
                 (int) $overdueInvoices,
             ];
@@ -69,13 +74,17 @@ class DashboardController extends Controller
             return view('dashboard', compact(
                 'totalStudents',
                 'paidInvoices',
+                'partiallyPaidInvoices',
                 'pendingInvoices',
                 'overdueInvoices',
                 'totalUsers',
                 'totalRevenue',
                 'revenueChart',
                 'paymentChartData',
-                'recentPayments'
+                'recentPayments',
+                'totalBilled',  
+                'totalPaid',
+                'paymentRate'
             ));
 
         } catch (\Exception $e) {
@@ -83,12 +92,13 @@ class DashboardController extends Controller
             return view('dashboard', [
                 'totalStudents' => 0,
                 'paidInvoices' => 0,
+                'partiallyPaidInvoices' => 0,
                 'pendingInvoices' => 0,
                 'overdueInvoices' => 0,
                 'totalUsers' => 0,
                 'totalRevenue' => 0,
                 'revenueChart' => ['labels' => [], 'data' => []],
-                'paymentChartData' => [0, 0, 0],
+                'paymentChartData' => [0, 0, 0, 0],
                 'recentPayments' => collect(),
             ]);
         }

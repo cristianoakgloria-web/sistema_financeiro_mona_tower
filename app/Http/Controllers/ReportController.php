@@ -12,7 +12,7 @@ use Carbon\Carbon;
 class ReportController extends Controller
 {
     // ─────────────────────────────────────────────────────────────
-    //  VIEWS (dashboard interno) totalPaid
+    //  VIEWS (dashboard interno)
     // ─────────────────────────────────────────────────────────────
 
     public function financial(Request $request)
@@ -22,12 +22,14 @@ class ReportController extends Controller
 
         $totalRevenue  = Payment::where('status', 'confirmed')->whereBetween('payment_date', [$startDate, $endDate])->sum('amount');
         $totalPayments = Payment::where('status', 'confirmed')->whereBetween('payment_date', [$startDate, $endDate])->count();
-        $totalInvoices = Invoice::whereBetween('issue_date',   [$startDate, $endDate])->count();
+        $totalInvoices = Invoice::whereBetween('issue_date', [$startDate, $endDate])->count();
 
-        $paidInvoices = Invoice::whereBetween('issue_date', [$startDate, $endDate])
-            ->where('status', 'paid')->count();
-        $paymentRate = $totalInvoices > 0 ? ($paidInvoices / $totalInvoices) * 100 : 0;
+        // Cálculo da taxa de pagamento baseado em valores monetários (resolve o problema das faturas "parcial")
+        $totalBilled = Invoice::whereBetween('issue_date', [$startDate, $endDate])->sum('total_amount');
+        $totalPaid   = Invoice::whereBetween('issue_date', [$startDate, $endDate])->sum('amount_paid');
+        $paymentRate = $totalBilled > 0 ? ($totalPaid / $totalBilled) * 100 : 0;
 
+        // Dados para o gráfico de receita por mês (valores pagos confirmados)
         $revenueData = Payment::select(
             DB::raw('YEAR(payment_date) as year'),
             DB::raw('MONTH(payment_date) as month'),
@@ -45,6 +47,7 @@ class ReportController extends Controller
             $revenueChart['data'][]   = (float) $data->total;
         }
 
+        // Distribuição por método de pagamento (quantidade de transações)
         $paymentMethodData = Payment::select('payment_method', DB::raw('COUNT(*) as count'))
             ->where('status', 'confirmed')
             ->whereBetween('payment_date', [$startDate, $endDate])
@@ -56,6 +59,7 @@ class ReportController extends Controller
             $paymentMethodChart['data'][]   = $data->count;
         }
 
+        // Últimos pagamentos (limitado a 10)
         $recentPayments = Payment::with(['invoice.student'])
             ->where('status', 'confirmed')
             ->whereBetween('payment_date', [$startDate, $endDate])
@@ -63,10 +67,27 @@ class ReportController extends Controller
 
         $students = Student::all();
 
+        \Log::info('Debug Taxa Pagamento', [
+            'totalBilled' => $totalBilled ?? 0,
+            'totalPaid' => $totalPaid ?? 0,
+            'paymentRate' => $paymentRate ?? 0,
+            'startDate' => $startDate,
+            'endDate' => $endDate
+        ]);
+
         return view('reports.financial', compact(
-            'totalRevenue', 'totalPayments', 'totalInvoices', 'paymentRate',
-            'revenueChart', 'paymentMethodChart', 'recentPayments',
-            'students', 'startDate', 'endDate'
+            'totalRevenue',
+            'totalPayments',
+            'totalInvoices',
+            'paymentRate',
+            'revenueChart',
+            'paymentMethodChart',
+            'recentPayments',
+            'students',
+            'startDate',
+            'endDate',
+            'totalBilled',
+            'totalPaid'
         ));
     }
 
@@ -81,11 +102,11 @@ class ReportController extends Controller
 
         $totalStudents               = $students->count();
         $studentsWithPendingPayments = $students->filter(fn($s) =>
-            $s->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance') > 0
+            $s->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance') > 0
         )->count();
 
         $totalDebt = $students->sum(fn($s) =>
-            $s->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance')
+            $s->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance')
         );
 
         $classes       = Student::distinct()->pluck('class');
@@ -111,12 +132,13 @@ class ReportController extends Controller
         $totalBilled   = $invoices->sum('total_amount');
         $totalPaid     = $invoices->sum('amount_paid');
         $totalPending  = $invoices->where('status', 'pendente')->sum('balance');
-        $totalOverdue  = $invoices->where('status', 'overdue')->sum('balance');
+        $totalOverdue  = $invoices->where('status', 'vencido')->sum('balance');
 
         $statusDistribution = [
-            'paid'    => $invoices->where('status', 'paid')->count(),
-            'pending' => $invoices->where('status', 'pendente')->count(),
-            'overdue' => $invoices->where('status', 'overdue')->count(),
+            'pago'    => $invoices->where('status', 'pago')->count(),
+            'pendente' => $invoices->where('status', 'pendente')->count(),
+            'vencido' => $invoices->where('status', 'vencido')->count(),
+            'parcial' => $invoices->where('status', 'parcial')->count(),
         ];
 
         return view('reports.invoices', compact(
@@ -126,7 +148,7 @@ class ReportController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  EXPORTAÇÕES PROFISSIONAIS svg
+    //  EXPORTAÇÕES PROFISSIONAIS
     // ─────────────────────────────────────────────────────────────
 
     public function exportStudents(Request $request)
@@ -141,10 +163,10 @@ class ReportController extends Controller
 
         $totalStudents               = $students->count();
         $studentsWithPendingPayments = $students->filter(fn($s) =>
-            $s->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance') > 0
+            $s->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance') > 0
         )->count();
         $totalDebt = $students->sum(fn($s) =>
-            $s->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance')
+            $s->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance')
         );
 
         $classes         = $students->groupBy('class');
@@ -156,7 +178,7 @@ class ReportController extends Controller
             $classLabels[]      = $class;
             $classData[]        = $classStudents->count();
             $classPendingData[] = $classStudents->filter(fn($s) =>
-                $s->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance') > 0
+                $s->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance') > 0
             )->count();
         }
 
@@ -191,29 +213,32 @@ class ReportController extends Controller
         $totalBilled    = $invoices->sum('total_amount');
         $totalPaid      = $invoices->sum('amount_paid');
         $totalPending   = $invoices->where('status', 'pendente')->sum('balance');
-        $totalOverdue   = $invoices->where('status', 'overdue')->sum('balance');
+        $totalOverdue   = $invoices->where('status', 'vencido')->sum('balance');
         $collectionRate = $totalBilled > 0 ? ($totalPaid / $totalBilled) * 100 : 0;
 
         $statusCounts = [
-            'paid'    => $invoices->where('status', 'paid')->count(),
-            'pending' => $invoices->where('status', 'pendente')->count(),
-            'overdue' => $invoices->where('status', 'overdue')->count(),
+            'pago'    => $invoices->where('status', 'pago')->count(),
+            'pendente' => $invoices->where('status', 'pendente')->count(),
+            'vencido' => $invoices->where('status', 'vencido')->count(),
+            'parcial' => $invoices->where('status', 'parcial')->count(),
         ];
 
+        // Dados mensais incluindo o status 'parcial'
         $monthlyStatus = Invoice::selectRaw("DATE_FORMAT(issue_date, '%Y-%m') as month, status, COUNT(*) as count")
             ->whereBetween('issue_date', [$startDate, $endDate])
             ->groupBy('month', 'status')->orderBy('month')->get()->groupBy('month');
 
-        $months = $paidData = $pendingData = $overdueData = [];
+        $months = $paidData = $pendingData = $overdueData = $partialData = [];
         $monthNames = ['01'=>'Jan','02'=>'Fev','03'=>'Mar','04'=>'Abr','05'=>'Mai','06'=>'Jun',
                        '07'=>'Jul','08'=>'Ago','09'=>'Set','10'=>'Out','11'=>'Nov','12'=>'Dez'];
 
         foreach ($monthlyStatus as $month => $statuses) {
             [$year, $m] = explode('-', $month);
             $months[]      = ($monthNames[$m] ?? $m) . '/' . substr($year, 2);
-            $paidData[]    = $statuses->where('status', 'paid')->first()->count    ?? 0;
+            $paidData[]    = $statuses->where('status', 'pago')->first()->count    ?? 0;
             $pendingData[] = $statuses->where('status', 'pendente')->first()->count ?? 0;
-            $overdueData[] = $statuses->where('status', 'overdue')->first()->count  ?? 0;
+            $overdueData[] = $statuses->where('status', 'vencido')->first()->count  ?? 0;
+            $partialData[] = $statuses->where('status', 'parcial')->first()->count  ?? 0; // ✅ novo
         }
 
         $filters = [['label' => 'Período', 'value' => $startDate->format('d/m/Y') . ' a ' . $endDate->format('d/m/Y')]];
@@ -224,7 +249,7 @@ class ReportController extends Controller
         $html = $this->renderInvoiceReport(
             $totalInvoices, $totalBilled, $totalPaid, $totalPending,
             $totalOverdue, $collectionRate, $invoices, $statusCounts,
-            $months, $paidData, $pendingData, $overdueData, $filters
+            $months, $paidData, $pendingData, $overdueData, $partialData, $filters
         );
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -253,49 +278,58 @@ class ReportController extends Controller
         $totalRevenue  = $payments->sum('amount');
         $totalPayments = $payments->count();
 
+        // Faturas emitidas no período
         $invoicesQuery = Invoice::whereBetween('issue_date', [$startDate, $endDate]);
-        if ($request->filled('student_id')) $invoicesQuery->where('student_id', $request->student_id);
+        if ($request->filled('student_id')) {
+            $invoicesQuery->where('student_id', $request->student_id);
+        }
         $totalInvoices = $invoicesQuery->count();
 
-        $paidInvoicesQuery = Invoice::whereBetween('issue_date', [$startDate, $endDate])->where('status', 'paid');
-        if ($request->filled('student_id')) $paidInvoicesQuery->where('student_id', $request->student_id);
-        $paymentRate = $totalInvoices > 0 ? ($paidInvoicesQuery->count() / $totalInvoices) * 100 : 0;
+        // Taxa de pagamento baseada em valores (corrige o problema das faturas "parcial")
+        $totalBilled = $invoicesQuery->sum('total_amount');
+        $totalPaid   = $invoicesQuery->sum('amount_paid');
+        $paymentRate = $totalBilled > 0 ? ($totalPaid / $totalBilled) * 100 : 0;
 
+        // Dados para o gráfico de receita mensal
         $revenueRows = Payment::select(
-            DB::raw('YEAR(payment_date) as year'),
-            DB::raw('MONTH(payment_date) as month'),
-            DB::raw('SUM(amount) as total')
-        )
-        ->where('status', 'confirmed')
-        ->whereBetween('payment_date', [$startDate, $endDate])
-        ->when($request->filled('student_id'), fn($q) =>
-            $q->whereHas('invoice', fn($q2) => $q2->where('student_id', $request->student_id))
-        )
-        ->groupBy('year', 'month')->orderBy('year')->orderBy('month')->get();
+                DB::raw('YEAR(payment_date) as year'),
+                DB::raw('MONTH(payment_date) as month'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->where('status', 'confirmed')
+            ->whereBetween('payment_date', [$startDate, $endDate])
+            ->when($request->filled('student_id'), fn($q) =>
+                $q->whereHas('invoice', fn($q2) => $q2->where('student_id', $request->student_id))
+            )
+            ->groupBy('year', 'month')->orderBy('year')->orderBy('month')
+            ->get();
 
-        $revenueLabels = $revenueDataArray = [];
+        $revenueLabels = $revenueData = [];
         foreach ($revenueRows as $row) {
-            $revenueLabels[]    = Carbon::create($row->year, $row->month)->translatedFormat('M Y');
-            $revenueDataArray[] = (float) $row->total;
+            $revenueLabels[] = Carbon::create($row->year, $row->month)->translatedFormat('M Y');
+            $revenueData[]   = (float) $row->total;
         }
 
+        // Gráfico de métodos de pagamento (por valor)
         $methodColors = ['#f97316','#1a3a6b','#fb923c','#2563eb','#fdba74','#3b82f6'];
-        $methodLabels = $methodData = [];
+        $methodLabels = $methodAmounts = [];
         foreach ($payments->groupBy('payment_method') as $method => $group) {
-            $methodLabels[] = $this->translatePaymentMethod($method);
-            $methodData[]   = $group->sum('amount');
+            $methodLabels[]   = $this->translatePaymentMethod($method);
+            $methodAmounts[] = $group->sum('amount');
         }
 
+        // Filtros aplicados
         $filters = [['label' => 'Período', 'value' => $startDate->format('d/m/Y') . ' a ' . $endDate->format('d/m/Y')]];
         if ($request->filled('student_id')) {
             $student = Student::find($request->student_id);
             $filters[] = ['label' => 'Estudante', 'value' => $student?->name ?? 'N/A'];
         }
 
+        // Monta o HTML do relatório
         $html = $this->renderFinancialReport(
             $totalRevenue, $totalPayments, $totalInvoices, $paymentRate,
-            $recentPayments, $revenueLabels, $revenueDataArray,
-            $methodLabels, $methodData, $methodColors, $filters
+            $recentPayments, $revenueLabels, $revenueData,
+            $methodLabels, $methodAmounts, $methodColors, $filters
         );
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -320,7 +354,7 @@ class ReportController extends Controller
         foreach ($students as $student) {
             $i++;
             $totalPaid      = $student->invoices->sum('amount_paid');
-            $pendingBalance = $student->invoices->whereIn('status', ['pendente', 'overdue'])->sum('balance');
+            $pendingBalance = $student->invoices->whereIn('status', ['pendente', 'vencido'])->sum('balance');
             $invoiceCount   = $student->invoices->count();
             $statusClass    = $pendingBalance > 0 ? 'row-warning' : 'row-ok';
 
@@ -432,7 +466,7 @@ class ReportController extends Controller
     private function renderInvoiceReport(
         $totalInvoices, $totalBilled, $totalPaid, $totalPending, $totalOverdue,
         $collectionRate, $invoices, $statusCounts,
-        $months, $paidData, $pendingData, $overdueData, $filters
+        $months, $paidData, $pendingData, $overdueData, $partialData, $filters
     ): string {
         $filtersHtml = $this->buildFiltersHtml($filters);
 
@@ -441,13 +475,14 @@ class ReportController extends Controller
         foreach ($invoices as $invoice) {
             $i++;
             $statusBadge = match($invoice->status) {
-                'paid'    => "<span class='badge badge-paid'>Paga</span>",
+                'pago'    => "<span class='badge badge-paid'>Paga</span>",
                 'pendente'=> "<span class='badge badge-pending'>Pendente</span>",
-                'overdue' => "<span class='badge badge-overdue'>Vencida</span>",
+                'vencido' => "<span class='badge badge-overdue'>Vencida</span>",
+                'parcial' => "<span class='badge badge-partial'>Parcial</span>",
                 default   => "<span class='badge'>{$invoice->status}</span>",
             };
             $rowClass = match($invoice->status) {
-                'overdue' => 'row-warning',
+                'vencido' => 'row-warning',
                 default   => '',
             };
             $tableRows .= "
@@ -467,6 +502,7 @@ class ReportController extends Controller
         $jsPaidData    = json_encode($paidData);
         $jsPendingData = json_encode($pendingData);
         $jsOverdueData = json_encode($overdueData);
+        $jsPartialData = json_encode($partialData);
         $generatedAt   = Carbon::now()->format('d/m/Y \à\s H:i');
 
         return $this->wrapReport(
@@ -481,7 +517,7 @@ class ReportController extends Controller
                 <div class='kpi-card'>
                     <p class='kpi-label'>Total de Faturas</p>
                     <p class='kpi-value' style='color:#1a3a6b'>{$totalInvoices}</p>
-                    <p class='kpi-sub'>Pagas: {$statusCounts['paid']} &nbsp;|&nbsp; Pendentes: {$statusCounts['pending']} &nbsp;|&nbsp; Vencidas: {$statusCounts['overdue']}</p>
+                    <p class='kpi-sub'>Pagas: {$statusCounts['pago']} &nbsp;|&nbsp; Pendentes: {$statusCounts['pendente']} &nbsp;|&nbsp; Vencidas: {$statusCounts['vencido']} &nbsp;|&nbsp; Parciais: {$statusCounts['parcial']}</p>
                 </div>
                 <div class='kpi-card'>
                     <p class='kpi-label'>Valor Total Emitido</p>
@@ -545,8 +581,8 @@ class ReportController extends Controller
             new Chart(document.getElementById('statusChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pagas','Pendentes','Vencidas'],
-                    datasets: [{ data: [{$statusCounts['paid']},{$statusCounts['pending']},{$statusCounts['overdue']}], backgroundColor: ['#16a34a','#f59e0b','#dc2626'] }]
+                    labels: ['Pagas','Pendentes','Vencidas','Parciais'],
+                    datasets: [{ data: [{$statusCounts['pago']},{$statusCounts['pendente']},{$statusCounts['vencido']},{$statusCounts['parcial']}], backgroundColor: ['#16a34a','#f59e0b','#dc2626','#8b5cf6'] }]
                 },
                 options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
@@ -557,7 +593,8 @@ class ReportController extends Controller
                     datasets: [
                         { label:'Pagas',    data:{$jsPaidData},    borderColor:'#16a34a', backgroundColor:'rgba(22,163,74,0.1)',   tension:0.4, fill:true },
                         { label:'Pendentes',data:{$jsPendingData}, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)',  tension:0.4, fill:true },
-                        { label:'Vencidas', data:{$jsOverdueData}, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,0.1)',   tension:0.4, fill:true }
+                        { label:'Vencidas', data:{$jsOverdueData}, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,0.1)',   tension:0.4, fill:true },
+                        { label:'Parciais', data:{$jsPartialData}, borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.1)',   tension:0.4, fill:true }
                     ]
                 },
                 options: { responsive: true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true } } }
@@ -697,7 +734,12 @@ class ReportController extends Controller
         string $generatedAt
     ): string {
         $css = $this->reportCSS($accentColor, $accentLight);
-
+        $logoPath = public_path('images/MonaTower.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoBase64 = 'data:image/png;base64,' . $logoData;
+        }
         return <<<HTML
 <!DOCTYPE html>
 <html lang="pt-AO">
@@ -725,7 +767,18 @@ class ReportController extends Controller
 
         <!-- ── Cabeçalho Institucional ── -->
         <header class="report-header">
-            
+            <div class="header-brand">
+                <div class="header-logo">
+                    <img src="{$logoBase64}" alt="Logo" style="width:60px; height:60px; object-fit:contain;">
+                </div>
+                <div class="institution-info">
+                    <h2 class="institution-name">Complexo Escolar Mona Tower</h2>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div class="report-generated">Gerado em: $generatedAt</div>
+                <div class="report-ref">Sistema de Gestão e Processamento de Pagamentos</div>
+            </div>
         </header>
 
         <!-- ── Título do Relatório ── -->
@@ -740,7 +793,7 @@ class ReportController extends Controller
         <!-- ── Rodapé ── -->
         <footer class="report-footer">
             <div class="footer-left">
-                <p>Documento gerado automaticamente pelo Sistema de Gestão Escolar.</p>
+                <p>Documento gerado automaticamente pelo Sistema de Gestão e Processamento de Pagamentos.</p>
                 <p>Este relatório é confidencial e destina-se exclusivamente ao uso interno da instituição.</p>
             </div>
             <div class="footer-right">
@@ -1006,25 +1059,15 @@ HTML;
     private function translateStatus(string $status): string
     {
         return match($status) {
-            'paid'    => 'Pagas',
-            'pending' => 'Pendentes',
-            'overdue' => 'Vencidas',
+            'pago'    => 'Pagas',
+            'pendente' => 'Pendentes',
+            'vencido' => 'Vencidas',
+            'parcial' => 'Parciais',
             default   => ucfirst($status),
         };
     }
 
-    private function now(): Carbon
-    {
-        return Carbon::now();
-    }
-
-    private function fmt(float|int $value): string
-    {
-        return number_format($value, 2, ',', ' ');
-    }
-
-    private function fmtPct(float|int $value): string
-    {
-        return number_format($value, 1) . '%';
-    }
+    private function now(): Carbon { return Carbon::now(); }
+    private function fmt(float|int $value): string { return number_format($value, 2, ',', ' '); }
+    private function fmtPct(float|int $value): string { return number_format($value, 1) . '%'; }
 }

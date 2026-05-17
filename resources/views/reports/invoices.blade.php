@@ -38,9 +38,10 @@
                         <select name="status" id="status"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-school-primary focus:border-school-primary transition">
                             <option value="">Todos os Status</option>
-                            <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Pagas</option>
-                            <option value="pending" {{ request('status') == 'pendente' ? 'selected' : '' }}>Pendentes</option>
-                            <option value="overdue" {{ request('status') == 'overdue' ? 'selected' : '' }}>Vencidas</option>
+                            <option value="pago" {{ request('status') == 'pago' ? 'selected' : '' }}>Pagas</option>
+                            <option value="pendente" {{ request('status') == 'pendente' ? 'selected' : '' }}>Pendentes</option>
+                            <option value="vencido" {{ request('status') == 'vencido' ? 'selected' : '' }}>Vencidas</option>
+                            <option value="parcial" {{ request('status') == 'parcial' ? 'selected' : '' }}>Parciais</option>
                         </select>
                     </div>
                     <div class="flex items-end">
@@ -87,22 +88,25 @@
                 <div class="space-y-4">
                     @php
                         $statusColors = [
-                            'paid' => 'bg-green-100 text-green-800',
-                            'pending' => 'bg-yellow-100 text-yellow-800', 
-                            'overdue' => 'bg-red-100 text-red-800'
+                            'pago'    => 'bg-green-100 text-green-800',
+                            'pendente' => 'bg-yellow-100 text-yellow-800', 
+                            'vencido'  => 'bg-red-100 text-red-800',
+                            'parcial'  => 'bg-purple-100 text-purple-800'
                         ];
                         
                         $statusLabels = [
-                            'paid' => 'Pagas',
-                            'pending' => 'Pendentes',
-                            'overdue' => 'Vencidas'
+                            'pago'    => 'Pagas',
+                            'pendente' => 'Pendentes',
+                            'vencido'  => 'Vencidas',
+                            'parcial'  => 'Parciais'
                         ];
                     @endphp
                     
                     @foreach($statusDistribution as $status => $count)
+                    @if($count > 0)
                     <div class="flex items-center justify-between">
-                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full {{ $statusColors[$status] }}">
-                            {{ $statusLabels[$status] }}
+                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full {{ $statusColors[$status] ?? 'bg-gray-100 text-gray-800' }}">
+                            {{ $statusLabels[$status] ?? ucfirst($status) }}
                         </span>
                         <div class="flex items-center space-x-4">
                             <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
@@ -111,6 +115,7 @@
                             </span>
                         </div>
                     </div>
+                    @endif
                     @endforeach
                 </div>
             </div>
@@ -192,10 +197,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                    {{ $invoice->status === 'paid' ? 'bg-green-100 text-green-800' : 
-                                       ($invoice->status === 'overdue' ? 'bg-red-100 text-red-800' : 
-                                       'bg-yellow-100 text-yellow-800') }}">
-                                    {{ ucfirst($invoice->status) }}
+                                    {{ $invoice->status === 'pago' ? 'bg-green-100 text-green-800' : 
+                                       ($invoice->status === 'vencido' ? 'bg-red-100 text-red-800' : 
+                                       ($invoice->status === 'parcial' ? 'bg-purple-100 text-purple-800' :
+                                       'bg-yellow-100 text-yellow-800')) }}">
+                                    {{ $invoice->status === 'pago' ? 'Paga' : 
+                                       ($invoice->status === 'parcial' ? 'Parcial' : 
+                                       ucfirst($invoice->status)) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

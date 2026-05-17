@@ -6,8 +6,8 @@
     <!-- Logo -->
     <div class="flex items-center h-16 bg-school-dark px-4" :class="collapsed ? 'justify-center' : 'justify-between'">
         <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-school-accent rounded-full flex items-center justify-center flex-shrink-0">
-                <img src="{{ asset('images/MonaTowerlogo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl">
+                <img src="{{ asset('images/MonaTower.png') }}" alt="Logo da Mona Tower" class="w-full h-full object-contain drop-shadow-sm">
             </div>
             <span x-show="!collapsed" class="text-xl font-bold whitespace-nowrap">Mona Tower</span>
         </div>

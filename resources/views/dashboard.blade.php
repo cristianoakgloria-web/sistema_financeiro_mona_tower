@@ -115,11 +115,10 @@
                     <div>
                         <p class="text-sm font-medium text-gray-600">Taxa de Pagamento</p>
                         <p class="text-2xl font-semibold text-green-600">
-                            @php
-                                $totalInvoices = $paidInvoices + $pendingInvoices + $overdueInvoices;
-                                $paymentRate = $totalInvoices > 0 ? ($paidInvoices / $totalInvoices) * 100 : 0;
-                            @endphp
                             {{ number_format($paymentRate, 1) }}%
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Kz {{ number_format($totalPaid, 0, ',', ' ') }} / Kz {{ number_format($totalBilled, 0, ',', ' ') }}
                         </p>
                     </div>
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
@@ -273,17 +272,19 @@
         });
 
         // Gráfico de Estado de Pagamentos
+        // Gráfico de Estado de Pagamentos
         const paymentCtx = document.getElementById('paymentChart').getContext('2d');
         new Chart(paymentCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Pagas', 'Pendentes', 'Vencidas'],
+                labels: ['Pagas', 'Parcialmente Pagas', 'Pendentes', 'Vencidas'],
                 datasets: [{
                     data: @json($paymentChartData),
                     backgroundColor: [
-                        'rgb(34, 197, 94)',
-                        'rgb(250, 204, 21)',
-                        'rgb(239, 68, 68)'
+                        '#16a34a', // Pagas (verde igual ao relatório)
+                        '#8b5cf6', // Parcialmente Pagas (roxo igual ao relatório)
+                        '#f59e0b', // Pendentes (laranja igual ao relatório)
+                        '#dc2626'  // Vencidas (vermelho igual ao relatório)
                     ],
                     borderWidth: 2,
                     borderColor: '#fff'

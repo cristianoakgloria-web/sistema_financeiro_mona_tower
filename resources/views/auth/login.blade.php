@@ -24,11 +24,11 @@
     <div class="max-w-md w-full">
         <!-- Logo -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-                <img src="{{ asset('images/MonaTowerlogo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl">
+                <img src="{{ asset('images/MonaTower.png') }}" alt="Logo da Mona Tower" class="w-full h-full object-contain drop-shadow-sm">
             </div>
-            <h1 class="text-2xl font-bold text-white">Colégio Mona Tower</h1>
-            <p class="text-school-light mt-2">Sistema de Gestão de Pagamentos</p>
+            <h1 class="text-2xl font-bold text-white">Complexo Escolar Mona Tower</h1>
+            <p class="text-school-light mt-2">Sistema de Gestão e Processamento de Pagamentos</p>
         </div>
 
         <!-- Card de Login -->
