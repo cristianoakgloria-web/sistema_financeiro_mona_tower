@@ -16,7 +16,7 @@ class StudentController extends Controller
             'services'
         ])
         ->latest()
-        ->paginate(10);
+        ->paginate(6);
 
         return view('students.index', compact('students'));
     }

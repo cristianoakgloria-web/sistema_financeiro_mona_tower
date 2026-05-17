@@ -15,43 +15,50 @@
 
             <div class="flex space-x-2">
 
-                {{-- Editar --}}
-                <a href="{{ route('invoices.edit', $invoice) }}"
-                   class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition flex items-center space-x-2">
-
-                    <span>Editar</span>
-                </a>
-
-                {{-- Pagamento --}}
-                @if($invoice->balance > 0)
-
-                    <a href="{{ route('invoices.payments.create', $invoice) }}"
-                       class="bg-school-primary text-white px-4 py-2 rounded-lg hover:bg-school-dark transition flex items-center space-x-2">
-
-                        <span>Registrar Pagamento</span>
+                {{-- Editar - Só permite editar se não estiver paga ou com pagamento pendente --}}
+                @if(!in_array($invoice->status, ['pago', 'aguardando_confirmacao']))
+                    <a href="{{ route('invoices.edit', $invoice) }}"
+                       class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition flex items-center space-x-2">
+                        <span>Editar</span>
                     </a>
-
-                @else
-
-                    <span class="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center">
-                        Fatura Paga
-                    </span>
-
                 @endif
 
-                {{-- Eliminar --}}
-                <form action="{{ route('invoices.destroy', $invoice) }}"
-                      method="POST"
-                      onsubmit="return confirm('Eliminar esta fatura?')">
+                {{-- Pagamento - Mostrar apenas se houver saldo real --}}
+                @php
+                    $totalConfirmed = $invoice->payments->where('status', 'confirmed')->sum('amount');
+                    $realBalance = $invoice->total_amount - $totalConfirmed;
+                    $hasPendingPayment = $invoice->payments->contains('status', 'pending');
+                @endphp
 
-                    @csrf
-                    @method('DELETE')
+                @if($realBalance > 0)
+                    @if(!$hasPendingPayment && $invoice->status !== 'pago')
+                        <a href="{{ route('invoices.payments.create', $invoice) }}"
+                           class="bg-school-primary text-white px-4 py-2 rounded-lg hover:bg-school-dark transition flex items-center space-x-2">
+                            <span>Registrar Pagamento</span>
+                        </a>
+                    @elseif($hasPendingPayment)
+                        <span class="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg flex items-center">
+                            ⏳ Pagamento Aguardando Confirmação
+                        </span>
+                    @endif
+                @else
+                    <span class="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center">
+                        ✓ Fatura Paga
+                    </span>
+                @endif
 
-                    <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-                        Eliminar
-                    </button>
-
-                </form>
+                {{-- Eliminar - Só permite eliminar se não estiver paga --}}
+                @if($invoice->status !== 'pago')
+                    <form action="{{ route('invoices.destroy', $invoice) }}"
+                          method="POST"
+                          onsubmit="return confirm('Eliminar esta fatura?')">
+                        @csrf
+                        @method('DELETE')
+                        <button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                            Eliminar
+                        </button>
+                    </form>
+                @endif
 
             </div>
 
@@ -95,12 +102,18 @@
                     <p class="text-sm text-gray-500">Status</p>
 
                     <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                        {{ $invoice->status === 'paid' ? 'bg-green-100 text-green-800' :
-                           ($invoice->status === 'overdue' ? 'bg-red-100 text-red-800' :
-                           'bg-yellow-100 text-yellow-800') }}">
-
-                        {{ ucfirst($invoice->status) }}
-
+                        {{ $invoice->status === 'pago' ? 'bg-green-100 text-green-800' :
+                        ($invoice->status === 'vencido' ? 'bg-red-100 text-red-800' :
+                        ($invoice->status === 'aguardando_confirmacao' ? 'bg-purple-100 text-purple-800' :
+                        ($invoice->status === 'parcial' ? 'bg-blue-100 text-blue-800' :
+                        ($invoice->status === 'rejeitado' ? 'bg-gray-100 text-gray-800' :
+                        'bg-yellow-100 text-yellow-800')))) }}">
+                        
+                        {{ $invoice->status === 'aguardando_confirmacao' ? 'A Aguardar Confirmação' : 
+                        ($invoice->status === 'vencido' ? 'Vencida' :
+                        ($invoice->status === 'parcial' ? 'Parcial' :
+                        ($invoice->status === 'rejeitado' ? 'Rejeitado' :
+                        ucfirst($invoice->status)))) }}
                     </span>
 
                 </div>
@@ -139,7 +152,7 @@
                 </div>
 
                 <div>
-                    <p class="text-sm text-gray-500">Pago</p>
+                    <p class="text-sm text-gray-500">Pago (Confirmado)</p>
                     <p class="font-medium text-green-600">
                         Kz {{ number_format($invoice->amount_paid, 2, ',', '.') }}
                     </p>
@@ -148,7 +161,7 @@
                 <div>
                     <p class="text-sm text-gray-500">Saldo</p>
                     <p class="font-bold text-red-600">
-                        Kz {{ number_format($invoice->balance, 2, ',', '.') }}
+                        Kz {{ number_format($realBalance, 2, ',', '.') }}
                     </p>
                 </div>
 
@@ -159,7 +172,7 @@
     </div>
 
     {{-- ========================= --}}
-    {{-- ITENS DA FATURA (NOVIDADE) --}}
+    {{-- ITENS DA FATURA --}}
     {{-- ========================= --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
 
@@ -222,52 +235,51 @@
                 Pagamentos
             </h2>
 
-            @if($invoice->balance > 0)
-
+            @if($realBalance > 0 && $invoice->status !== 'pago' && !$hasPendingPayment)
                 <a href="{{ route('invoices.payments.create', $invoice) }}"
-                   class="bg-school-primary text-white px-4 py-2 rounded-lg text-sm">
-
-                    Adicionar Pagamento
-
+                   class="bg-school-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-school-dark transition">
+                    + Adicionar Pagamento
                 </a>
-
             @endif
 
         </div>
+
+        
 
         <div class="space-y-3">
 
             @forelse($invoice->payments as $payment)
 
-                <div class="flex justify-between items-center p-3 border rounded-lg">
+                <div class="flex justify-between items-center p-3 border rounded-lg {{ $payment->status === 'pending' ? 'bg-yellow-50 border-yellow-300' : ($payment->status === 'confirmed' ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300') }}">
 
-                    <div>
-
-                        <p class="font-medium">
-                            Kz {{ number_format($payment->amount, 2, ',', '.') }}
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <p class="font-bold text-lg">
+                                Kz {{ number_format($payment->amount, 2, ',', '.') }}
+                            </p>
+                            <span class="text-xs px-2 py-0.5 rounded-full 
+                                {{ $payment->status === 'confirmed' ? 'bg-green-200 text-green-800' : 
+                                   ($payment->status === 'pending' ? 'bg-yellow-200 text-yellow-800' : 
+                                   'bg-red-200 text-red-800') }}">
+                                {{ $payment->status === 'confirmed' ? 'Confirmado' : 
+                                   ($payment->status === 'pending' ? 'Pendente' : 'Rejeitado') }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">
+                            {{ $payment->payment_date->format('d/m/Y') }} • {{ ucfirst($payment->payment_method) }}
                         </p>
-
-                        <p class="text-sm text-gray-500">
-                            {{ $payment->payment_date->format('d/m/Y') }}
-                        </p>
-
+                        @if($payment->reference)
+                            <p class="text-xs text-gray-400">Ref: {{ $payment->reference }}</p>
+                        @endif
+                        @if($payment->notes)
+                            <p class="text-xs text-gray-500 mt-1">{{ $payment->notes }}</p>
+                        @endif
                     </div>
-
-                    <div class="text-right text-sm text-gray-500">
-
-                        {{ ucfirst($payment->payment_method) }}
-
-                        <br>
-
-                        {{ $payment->reference ?? 'N/A' }}
-
-                    </div>
-
                 </div>
 
             @empty
 
-                <p class="text-gray-500">
+                <p class="text-gray-500 text-center py-4">
                     Nenhum pagamento registrado.
                 </p>
 

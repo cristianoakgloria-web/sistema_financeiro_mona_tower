@@ -25,10 +25,7 @@
         <!-- Logo -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-                <svg class="w-8 h-8 text-school-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l9 5m-9-5v10"/>
-                </svg>
+                <img src="{{ asset('images/MonaTowerlogo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
             </div>
             <h1 class="text-2xl font-bold text-white">Colégio Mona Tower</h1>
             <p class="text-school-light mt-2">Sistema de Gestão de Pagamentos</p>

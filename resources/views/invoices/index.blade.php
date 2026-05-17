@@ -38,27 +38,35 @@
                 <!-- Direita: Botão de Disparo Manual -->
                 <button type="submit" name="processar_agora" value="1"
                         class="inline-flex items-center px-4 py-2 bg-school-primary text-white text-sm font-bold rounded-lg hover:bg-school-dark transition shadow-sm">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
                     GERAR MENSALIDADES DE {{ now()->translatedFormat('F') }}
                 </button>
             </div>
         </form>
     </div>
+
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-6">
             <!-- Filtros -->
-            <div class="mb-6 flex gap-4">
-                <select class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
+            <div class="mb-6 flex gap-4 flex-wrap">
+                <select id="status_filter" class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
                     <option value="">Todos os Status</option>
-                    <option value="pending">Pendente</option>
-                    <option value="em_validacao">Aguardando Confirmação</option>
-                    <option value="paid">Paga</option>
-                    <option value="overdue">Vencida</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="aguardando_confirmacao">A Aguardar Confirmação</option>
+                    <option value="pago">Paga</option>
+                    <option value="vencido">Vencida</option>
+                    <option value="parcial">Parcial</option>
+                    <option value="rejeitado">Rejeitado</option>
                 </select>
-                <input type="date" class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
-                <input type="date" class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
-                <button class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                <input type="date" id="date_from" placeholder="Data inicial" class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
+                <input type="date" id="date_to" placeholder="Data final" class="border-gray-300 rounded-lg shadow-sm focus:border-school-primary focus:ring focus:ring-school-primary focus:ring-opacity-50">
+                <button id="filter_btn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
                     Filtrar
+                </button>
+                <button id="clear_filter" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
+                    Limpar
                 </button>
             </div>
 
@@ -71,12 +79,18 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudante</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pago</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($invoices as $invoice)
+                        @php
+                            $hasPendingPayment = $invoice->payments->contains('status', 'pending');
+                            $totalConfirmed = $invoice->payments->where('status', 'confirmed')->sum('amount');
+                            $realBalance = $invoice->total_amount - $totalConfirmed;
+                        @endphp
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ $invoice->invoice_number }}
@@ -90,21 +104,26 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
                                 Kz {{ number_format($invoice->total_amount, 2, ',', ' ') }}
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                Kz {{ number_format($invoice->amount_paid, 2, ',', ' ') }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php
                                     $statusClasses = [
-                                        'paid' => 'bg-green-100 text-green-800',
-                                        'em_validacao' => 'bg-purple-100 text-purple-800',
-                                        'overdue' => 'bg-red-100 text-red-800',
-                                        'partial' => 'bg-blue-100 text-blue-800',
+                                        'pago' => 'bg-green-100 text-green-800',
+                                        'aguardando_confirmacao' => 'bg-purple-100 text-purple-800',
+                                        'vencido' => 'bg-red-100 text-red-800',
+                                        'parcial' => 'bg-blue-100 text-blue-800',
                                         'pendente' => 'bg-yellow-100 text-yellow-800',
+                                        'rejeitado' => 'bg-gray-100 text-gray-800',
                                     ];
                                     $statusLabels = [
-                                        'paid' => 'Paga',
-                                        'em_validacao' => 'A Aguardar Confirmação',
-                                        'overdue' => 'Vencida',
-                                        'partial' => 'Parcial',
-                                        'pending' => 'Pendente',
+                                        'pago' => 'Paga',
+                                        'aguardando_confirmacao' => 'A Aguardar Confirmação',
+                                        'vencido' => 'Vencida',
+                                        'parcial' => 'Parcial',
+                                        'pendente' => 'Pendente',
+                                        'rejeitado' => 'Rejeitado',
                                     ];
                                 @endphp
                                 <span class="px-2 py-1 inline-flex text-[11px] leading-5 font-bold rounded-full uppercase {{ $statusClasses[$invoice->status] ?? 'bg-gray-100 text-gray-800' }}">
@@ -120,24 +139,26 @@
                                         </svg>
                                     </a>
                                     
-                                    <!-- Botão Pagar: Oculto se já estiver paga ou em validação total -->
-                                    @if($invoice->status !== 'paid' && $invoice->status !== 'em_validacao')
-                                        <a href="{{ route('invoices.payments.create', $invoice) }}" class="text-green-600 hover:text-green-900 font-bold">
+                                    <!-- Botão Pagar - mostra apenas se houver saldo real e não houver pendente -->
+                                    @if($realBalance > 0 && $invoice->status !== 'pago' && $invoice->status !== 'aguardando_confirmacao' && !$hasPendingPayment)
+                                        <a href="{{ route('invoices.payments.create', $invoice) }}" class="text-green-600 hover:text-green-900" title="Registrar Pagamento">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                             </svg>
                                         </a>
                                     @endif
 
-                                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Tem certeza que deseja eliminar esta fatura?')">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    @if($invoice->status !== 'pago')
+                                        <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Tem certeza que deseja eliminar esta fatura?')" title="Eliminar">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -153,3 +174,25 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+document.getElementById('filter_btn')?.addEventListener('click', function() {
+    let status = document.getElementById('status_filter').value;
+    let dateFrom = document.getElementById('date_from').value;
+    let dateTo = document.getElementById('date_to').value;
+    
+    let url = new URL(window.location.href);
+    if (status) url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
+    if (dateFrom) url.searchParams.set('date_from', dateFrom);
+    else url.searchParams.delete('date_from');
+    if (dateTo) url.searchParams.set('date_to', dateTo);
+    else url.searchParams.delete('date_to');
+    
+    window.location.href = url.toString();
+});
+
+document.getElementById('clear_filter')?.addEventListener('click', function() {
+    window.location.href = window.location.pathname;
+});
+</script>

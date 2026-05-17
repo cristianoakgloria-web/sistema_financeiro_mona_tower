@@ -6,13 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Traits\HasAuditLog; // 1. Importação correta
+use App\Traits\HasAuditLog;
 
 class Invoice extends Model
 {
-    use HasFactory, HasAuditLog; // 2. Uso simplificado dos Traits
+    use HasFactory, HasAuditLog;
 
-    // Removi a duplicação. Apenas um array $fillable com todos os campos.
     protected $fillable = [
         'invoice_number',
         'student_id',
@@ -31,7 +30,6 @@ class Invoice extends Model
         'amount_paid' => 'decimal:2',
     ];
 
-    // --- Relacionamentos ---
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
@@ -47,30 +45,39 @@ class Invoice extends Model
         return $this->hasMany(Payment::class);
     }
 
-    // --- Atributos Dinâmicos ---
-
     public function getBalanceAttribute()
     {
         return $this->total_amount - $this->amount_paid;
     }
 
+    // Método para verificar se está vencida
     public function isOverdue()
     {
-        // Verifica se a data de vencimento passou e se ainda não foi paga
-        return $this->due_date < now() && !in_array($this->status, ['paid', 'pago']);
+        return $this->due_date < now() && 
+               $this->amount_paid < $this->total_amount &&
+               !in_array($this->status, ['pago', 'aguardando_confirmacao']);
     }
 
-    // --- Ciclo de Vida (Eventos) ---
-
-    /**
-     * IMPORTANTE: No Laravel 10/11/12, a recomendação é usar booted() em vez de boot()
-     * para evitar conflitos com os construtores internos do Eloquent.
-     */
     protected static function booted()
     {
         static::saving(function ($invoice) {
-            if ($invoice->isOverdue()) {
-                $invoice->status = 'overdue';
+            // Atualizar status baseado em pagamentos
+            $totalConfirmed = $invoice->payments()
+                ->where('status', 'confirmed')
+                ->sum('amount');
+            
+            $hasPending = $invoice->payments()
+                ->where('status', 'pending')
+                ->exists();
+            
+            if ($totalConfirmed >= $invoice->total_amount) {
+                $invoice->status = 'pago';
+            } elseif ($hasPending) {
+                $invoice->status = 'aguardando_confirmacao';
+            } elseif ($totalConfirmed > 0) {
+                $invoice->status = 'parcial';
+            } elseif ($invoice->due_date < now() && $totalConfirmed == 0) {
+                $invoice->status = 'vencido'; // Mudado de 'overdue' para 'vencido'
             }
         });
     }

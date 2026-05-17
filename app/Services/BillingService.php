@@ -13,139 +13,77 @@ class BillingService
 {
     public function processarCobrancaEmMassa()
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Buscar estudantes com serviços
-        |--------------------------------------------------------------------------
-        */
-
         $estudantes = Student::with('services')->get();
-
         $contagem = 0;
-
         DB::transaction(function () use ($estudantes, &$contagem) {
-
             foreach ($estudantes as $estudante) {
-
-                $this->gerarFaturaAluno($estudante);
-
-                $contagem++;
+                $fatura = $this->gerarFaturaAluno($estudante);
+                if ($fatura) {
+                    $contagem++;
+                }
             }
-
         });
-
         return $contagem;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Gerar fatura individual
-    |--------------------------------------------------------------------------
-    */
-
     public function gerarFaturaAluno($student)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Criar invoice
-        |--------------------------------------------------------------------------
-        */
+        // 1. Calcular o total primeiro
+        $mensalidade = 79000;
+        $total = $mensalidade;
 
+        // Soma dos serviços ativos mensais
+        foreach ($student->services as $service) {
+            if ($service->billing_type === 'monthly' && $service->is_active) {
+                $total += $service->price;
+            }
+        }
+
+        // 2. Se total <= 0, NÃO cria fatura (evita status 'pago' indevido)
+        if ($total <= 0) {
+            // Opcional: log ou retorno null
+            return null;
+        }
+
+        // 3. Criar invoice já com total_amount correto
         $invoice = Invoice::create([
             'invoice_number' => 'INV-' . Str::upper(Str::random(8)),
-
             'student_id' => $student->id,
-
             'due_date' => now()->day(1)->addMonth(),
-
             'issue_date' => now(),
-
             'description' => 'Mensalidade de ' . now()->translatedFormat('F Y'),
-
             'status' => 'pendente',
-
             'amount_paid' => 0,
-
-            'total_amount' => 0,
+            'total_amount' => $total, // já com o valor final
         ]);
 
-        $total = 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Mensalidade base
-        |--------------------------------------------------------------------------
-        */
-
-        $mensalidade = 79000;
-
+        // 4. Adicionar os itens (mensalidade + serviços)
         InvoiceItem::create([
             'invoice_id' => $invoice->id,
-
             'description' => 'Mensalidade Escolar',
-
             'amount' => $mensalidade,
-
             'type' => 'mensalidade',
         ]);
 
-        $total += $mensalidade;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Serviços associados ao estudante
-        |--------------------------------------------------------------------------
-        */
-
         foreach ($student->services as $service) {
-
-            // 👇 SÓ serviços mensais entram na cobrança automática
-            if ($service->billing_type !== 'monthly') {
-                continue;
+            if ($service->billing_type === 'monthly' && $service->is_active) {
+                InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'description' => $service->name,
+                    'amount' => $service->price,
+                    'type' => 'servico',
+                ]);
             }
-
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'description' => $service->name,
-                'amount' => $service->price,
-                'type' => 'servico',
-            ]);
-
-            $total += $service->price;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Actualizar total da invoice
-        |--------------------------------------------------------------------------
-        */
-
-        $invoice->update([
-            'total_amount' => $total
-        ]);
 
         return $invoice;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Verificar status da cobrança automática
-    |--------------------------------------------------------------------------
-    */
-
     public function isCobrancaAtiva()
     {
-        return Configuracao::where(
-            'chave',
-            'cobranca_massa_status'
-        )->value('valor') === '1';
+        return Configuracao::where('chave', 'cobranca_massa_status')
+            ->value('valor') === '1';
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Activar/desactivar cobrança
-    |--------------------------------------------------------------------------
-    */
 
     public function alternarStatusCobranca($status)
     {
