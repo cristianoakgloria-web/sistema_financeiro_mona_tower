@@ -20,7 +20,7 @@ class InvoiceReminder extends Notification
     }
 
     public function toDatabase($notifiable)
-    {
+    {//Sistema Regards
         $today = now()->startOfDay();
         $dueDate = \Carbon\Carbon::parse($this->invoice->due_date)->startOfDay();
         $daysOverdue = $dueDate->diffInDays($today, false);
@@ -95,7 +95,7 @@ class InvoiceReminder extends Notification
             ->greeting('Olá, ' . $notifiable->name)
             ->line($message)
             ->line('Valor: ' . number_format($this->invoice->total_amount, 2, ',', '.') . ' Kz')
-            ->line('Data de vencimento: ' . date('d/m/Y', strtotime($this->invoice->due_date)));
-            //->salutation('© ' . date('Y') . ' Complexo Escolar Mona Tower. All rights reserved.');
+            ->line('Data de vencimento: ' . date('d/m/Y', strtotime($this->invoice->due_date)))
+            ->salutation('© ' . date('Y') . ' Complexo Escolar Mona Tower. All rights reserved.');
     }
 }

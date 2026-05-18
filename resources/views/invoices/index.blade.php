@@ -18,32 +18,45 @@
         <form action="{{ route('invoices.mass-action') }}" method="POST">
             @csrf
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                
-                <!-- Esquerda: Toggle de Ativação -->
-                <div class="flex items-center space-x-3">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="status_toggle" value="1" 
-                            {{ $statusAtivo ? 'checked' : '' }} 
-                            onchange="this.form.submit()"
-                            class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                    <span class="text-sm font-medium text-gray-700">
-                        Faturamento Automático: <span class="{{ $statusAtivo ? 'text-green-600' : 'text-red-500' }}">
-                            {{ $statusAtivo ? 'ATIVADO' : 'DESATIVADO' }}
-                        </span>
+            <!-- Esquerda: Toggle de Ativação -->
+            <div class="flex items-center space-x-3">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="status_toggle" value="1" 
+                        {{ $statusAtivo ? 'checked' : '' }} 
+                        onchange="this.form.submit()"
+                        class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <span class="text-sm font-medium text-gray-700">
+                    Faturamento Automático: 
+                    <span class="font-semibold {{ $statusAtivo ? 'text-green-600' : 'text-red-500' }}">
+                        {{ $statusAtivo ? 'ATIVADO' : 'DESATIVADO' }}
                     </span>
-                </div>
+                </span>
+            </div>
 
-                <!-- Direita: Botão de Disparo Manual -->
+            <!-- Direita: Botões de Ação -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Botão: Gerar Mensalidades -->
                 <button type="submit" name="processar_agora" value="1"
-                        class="inline-flex items-center px-4 py-2 bg-school-primary text-white text-sm font-bold rounded-lg hover:bg-school-dark transition shadow-sm">
+                        class="inline-flex items-center px-4 py-2 bg-school-primary text-white text-sm font-bold rounded-lg hover:bg-school-dark transition shadow-sm"
+                        title="Gerar novas mensalidades do mês atual">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
                     GERAR MENSALIDADES DE {{ now()->translatedFormat('F') }}
                 </button>
+
+                <!-- Botão: Enviar Notificações -->
+                <button type="submit" name="enviar_notificacoes" value="1" class="inline-flex items-center px-4 py-2 bg-school-primary text-white text-sm font-bold rounded-lg hover:bg-school-dark transition shadow-sm"
+                        title="Enviar notificações para os estudantes com faturas pendentes ou vencidas">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    ENVIAR NOTIFICAÇÕES AGORA
+                </button>
             </div>
+        </div>
         </form>
     </div>
 

@@ -14,7 +14,7 @@ class ApplyLateFees extends Command
 
     public function handle()
     {
-        $invoices = Invoice::where('status', 'overdue')
+        $invoices = Invoice::where('status', 'vencido')
             ->whereDate('due_date', '<', Carbon::today())
             ->where('late_fee_applied', false)
             ->get();

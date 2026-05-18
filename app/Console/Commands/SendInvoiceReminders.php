@@ -167,7 +167,7 @@ class SendInvoiceReminders extends Command
         $overdueInvoices = Invoice::with([
             'student.guardian'
         ])
-        ->where('status', 'overdue')
+        ->where('status', 'vencido')
         ->whereDate('due_date', '<', $today)
         ->get();
 
@@ -180,7 +180,7 @@ class SendInvoiceReminders extends Command
                 $guardian->notify(
                     new InvoiceReminder(
                         $invoice,
-                        'overdue'
+                        'vencido'
                     )
                 );
 
@@ -188,6 +188,134 @@ class SendInvoiceReminders extends Command
                     "Notificação enviada para {$guardian->email}"
                 );
             }
+        }
+
+        // =========================================================================
+        // Faturas PARCIAIS (status = 'parcial')
+        // =========================================================================
+        // Vencem em 3 dias
+        $upcoming3parcial = Invoice::with(['student.guardian'])
+            ->where('status', 'parcial')
+            ->whereDate('due_date', $today->copy()->addDays(3))
+            ->get();
+
+        foreach ($upcoming3parcial as $invoice) {
+            $guardian = $invoice->student?->guardian;
+
+            if($guardian && $guardian->email) {
+                $guardian->notify(
+                    new InvoiceReminder(
+                        $invoice,
+                        'parcial_upcoming_3days'
+                    )
+                );
+
+                $this->info(
+                    "Lembrete enviado para {$guardian->email} (parcial)"
+                );
+            }
+
+            $this->notifyGuardian($invoice, 'parcial_upcoming_3days');
+        }
+
+        // Vencem em 2 dias
+        $upcoming2parcial = Invoice::with(['student.guardian'])
+            ->where('status', 'parcial')
+            ->whereDate('due_date', $today->copy()->addDays(2))
+            ->get();
+
+            $guardian = $invoice->student?->guardian;
+
+            if($guardian && $guardian->email) {
+                $guardian->notify(
+                    new InvoiceReminder(
+                        $invoice,
+                        'parcial_upcoming_2days'
+                    )
+                );
+
+                $this->info(
+                    "Lembrete enviado para {$guardian->email} (parcial)"
+                );
+            }
+
+        foreach ($upcoming2parcial as $invoice) {
+            $this->notifyGuardian($invoice, 'parcial_upcoming_2days');
+        }
+
+        // Vencem em 1 dia
+        $upcoming1parcial = Invoice::with(['student.guardian'])
+            ->where('status', 'parcial')
+            ->whereDate('due_date', $today->copy()->addDays(1))
+            ->get();
+
+            $guardiam = $invoice->student?->guardian;
+
+            if($guardian && $guardian->email) {
+                $guardian->notify(
+                    new InvoiceReminder(
+                        $invoice,
+                        'parcial_upcoming_1day'
+                    )
+                );
+
+                $this->info(
+                    "Lembrete enviado para {$guardian->email} (parcial)"
+                );
+            }
+
+        foreach ($upcoming1parcial as $invoice) {
+            $this->notifyGuardian($invoice, 'parcial_upcoming_1day');
+        }
+
+        // Vencem hoje
+        $todayParcial = Invoice::with(['student.guardian'])
+            ->where('status', 'parcial')
+            ->whereDate('due_date', $today)
+            ->get();
+
+            $guardian = $invoice->student?->guardian;
+
+            if($guardian && $guardian->email) {
+                $guardian->notify(
+                    new InvoiceReminder(
+                        $invoice,
+                        'parcial_today'
+                    )
+                );
+
+                $this->info(
+                    "Lembrete enviado para {$guardian->email} (parcial)"
+                );
+            }
+
+        foreach ($todayParcial as $invoice) {
+            $this->notifyGuardian($invoice, 'parcial_today');
+        }
+
+        // Vencidas (parciais)
+        $overdueParcial = Invoice::with(['student.guardian'])
+            ->where('status', 'parcial')
+            ->whereDate('due_date', '<', $today)
+            ->get();
+
+                $guardian = $invoice->student?->guardian;
+    
+                if($guardian && $guardian->email) {
+                    $guardian->notify(
+                        new InvoiceReminder(
+                            $invoice,
+                            'parcial_vencido'
+                        )
+                    );
+    
+                    $this->info(
+                        "Notificação enviada para {$guardian->email} (parcial)"
+                    );
+                }
+
+        foreach ($overdueParcial as $invoice) {
+            $this->notifyGuardian($invoice, 'parcial_vencido');
         }
 
         $this->info(

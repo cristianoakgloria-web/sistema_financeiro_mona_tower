@@ -16,6 +16,12 @@ class InvoiceController extends Controller
 {
     public function handleMassAction(Request $request, BillingService $billingService)
     {
+        // Disparo manual das notificações por e-mail
+        if ($request->has('enviar_notificacoes')) {
+            \Artisan::call('invoices:send-reminders');
+            return back()->with('success', 'Notificações por e-mail enviadas manualmente!');
+        }
+
         // Se clicou no botão de processar faturas agora
         if ($request->has('processar_agora')) {
             $total = $billingService->processarCobrancaEmMassa();
